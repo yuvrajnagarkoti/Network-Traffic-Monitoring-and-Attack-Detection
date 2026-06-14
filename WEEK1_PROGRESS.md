@@ -2,7 +2,7 @@
 
 ## Network Traffic Monitoring & Attack Detection System
 
-**Week:** 1 of 16  
+**Week:** 1 of 8  
 **Period:** Planning & Architecture Phase  
 **Status:** ✅ Completed
 
@@ -328,4 +328,4 @@ The next phase builds the core packet capture engine:
 
 ---
 
-*Week 1 completed — 16-week Network IDS project.*
+*Week 1 completed — 8-week Network IDS project.*

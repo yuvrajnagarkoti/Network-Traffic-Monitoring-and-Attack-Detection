@@ -122,20 +122,16 @@ ids_project/
 
 ## Development Status
 
-| Phase | Description | Status |
-|-------|------------|--------|
-| 1 | Project Planning & System Architecture | ✅ Completed |
-| 2 | Development Environment & Database Design | ✅ Completed |
-| 3 | Packet Monitoring Engine | ⬜ Planned |
-| 4 | Core Attack Detection Engine | ⬜ Planned |
-| 5 | Machine Learning & Threat Intelligence | ⬜ Planned |
-| 6 | Threat Scoring & Response Engine | ⬜ Planned |
-| 7 | Alerting & Protection System | ⬜ Planned |
-| 8 | Search, Investigation & Reporting | ⬜ Planned |
-| 9 | Authentication & Dashboard | ⬜ Planned |
-| 10 | System Integration & Testing | ⬜ Planned |
-| 11 | Performance Optimization & Security Hardening | ⬜ Planned |
-| 12 | Deployment, Documentation & Future Enhancements | ⬜ Planned |
+| Week | Description | Status |
+|------|------------|--------|
+| 1 | Project Planning, System Architecture & Environment Setup | ✅ Completed |
+| 2 | Packet Monitoring Engine | 🔄 In Progress |
+| 3 | Core Attack Detection Engine | ⬜ Planned |
+| 4 | Machine Learning & Threat Intelligence | ⬜ Planned |
+| 5 | Threat Scoring & Alerting System | ⬜ Planned |
+| 6 | Search, Investigation & Reporting | ⬜ Planned |
+| 7 | Authentication, Dashboard & IP Protection | ⬜ Planned |
+| 8 | Integration Testing, Optimization & Deployment | ⬜ Planned |
 
 ## License
 

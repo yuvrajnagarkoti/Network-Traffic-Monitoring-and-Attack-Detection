@@ -13,7 +13,7 @@
 
 ## 📋 Project Overview
 
-This is a **16-week development project** building a production-grade Network Intrusion Detection System (IDS) from scratch. The system monitors live network traffic, detects attacks in real time, and provides an interactive security dashboard.
+An 8-week development project building a production-grade Network Intrusion Detection System (IDS). The system monitors live network traffic, detects attacks in real time, and provides an interactive security dashboard.
 
 ### Key Capabilities
 
@@ -73,7 +73,6 @@ This is a **16-week development project** building a production-grade Network In
 | **Frontend** | HTML5/CSS3/JavaScript, Chart.js |
 | **Deployment** | Docker Compose, Nginx, Gunicorn |
 | **Authentication** | bcrypt, JWT, TOTP 2FA |
-| **Containerization** | Docker, Docker Compose |
 
 ---
 
@@ -104,7 +103,7 @@ Network-Traffic-Monitoring-and-Attack-Detection/
     ├── migrations/             # Alembic database migrations
     ├── tests/                  # Unit, integration, simulation tests
     ├── docker/                 # Docker, Nginx, PostgreSQL config
-    ├── docs/                   # Week 1 planning & architecture docs
+    ├── docs/                   # Planning & architecture documentation
     │   ├── requirements/       # Functional & non-functional specs
     │   ├── architecture/       # System & data flow diagrams
     │   └── threat_model/       # STRIDE threat analysis
@@ -115,20 +114,16 @@ Network-Traffic-Monitoring-and-Attack-Detection/
 
 ## 📅 Development Progress
 
-| Week | Phase | Description | Status |
-|------|-------|-------------|--------|
-| **1** | Phase 1 | Project Planning & System Architecture | ✅ Completed |
-| **1** | Phase 2 | Development Environment & Database Design | ✅ Completed |
-| **2–3** | Phase 3 | Packet Monitoring Engine | 🔄 In Progress |
-| **3–4** | Phase 4 | Core Attack Detection Engine | ⬜ Planned |
-| **4–5** | Phase 5 | Machine Learning & Threat Intelligence | ⬜ Planned |
-| **5–6** | Phase 6 | Threat Scoring & Response Engine | ⬜ Planned |
-| **6–7** | Phase 7 | Alerting & Protection System | ⬜ Planned |
-| **8** | Phase 8 | Search, Investigation & Reporting | ⬜ Planned |
-| **9** | Phase 9 | Authentication & Dashboard | ⬜ Planned |
-| **10** | Phase 10 | System Integration & Testing | ⬜ Planned |
-| **11** | Phase 11 | Performance Optimization & Security Hardening | ⬜ Planned |
-| **12** | Phase 12 | Deployment, Documentation & Future Enhancements | ⬜ Planned |
+| Week | Description | Status |
+|------|-------------|--------|
+| **1** | Project Planning, System Architecture & Environment Setup | ✅ Completed |
+| **2** | Packet Monitoring Engine | 🔄 In Progress |
+| **3** | Core Attack Detection Engine | ⬜ Planned |
+| **4** | Machine Learning & Threat Intelligence | ⬜ Planned |
+| **5** | Threat Scoring & Alerting System | ⬜ Planned |
+| **6** | Search, Investigation & Reporting | ⬜ Planned |
+| **7** | Authentication, Dashboard & IP Protection | ⬜ Planned |
+| **8** | Integration Testing, Optimization & Deployment | ⬜ Planned |
 
 ---
 
@@ -136,23 +131,23 @@ Network-Traffic-Monitoring-and-Attack-Detection/
 
 ### What Was Accomplished
 
-**Phase 1: Project Planning & System Architecture**
-- ✅ Defined all 15 detection modules with input/output specifications
-- ✅ Established attack detection thresholds (port scan, brute force, DDoS)
-- ✅ Designed 5-layer system architecture (Capture → Processing → Detection → Intelligence → Presentation)
-- ✅ Mapped complete data flow from raw packet to alert generation
-- ✅ Designed concurrency model (dedicated capture thread, detection thread pool, async batch writes)
-- ✅ Applied STRIDE threat model to all critical system components
-- ✅ Defined 3-tier RBAC permission matrix (Admin, Analyst, Viewer)
+**Planning & Architecture Phase:**
+- Defined all 15 detection modules with input/output specifications
+- Established attack detection thresholds (port scan, brute force, DDoS)
+- Designed 5-layer system architecture (Capture → Detection → Intelligence → Response → Presentation)
+- Mapped complete data flow from raw packet to alert generation
+- Designed concurrency model (dedicated capture thread, detection thread pool, async batch writes)
+- Applied STRIDE threat model to all critical system components
+- Defined 3-tier RBAC permission matrix (Admin, Analyst, Viewer)
 
-**Phase 2: Development Environment & Database Design**
-- ✅ Flask Application Factory pattern with Blueprint architecture
-- ✅ Configuration classes (Development, Testing, Production)
-- ✅ Complete PostgreSQL schema: 15+ tables across 8 categories
-- ✅ Alembic migrations initialized with rollback support
-- ✅ Multi-channel structured JSON logging system
-- ✅ Docker Compose development environment
-- ✅ `/health` endpoint for DB connectivity verification
+**Environment & Database Setup:**
+- Flask Application Factory pattern with Blueprint architecture
+- Configuration classes (Development, Testing, Production)
+- Complete PostgreSQL schema: 15+ tables across 8 categories
+- Alembic migrations with rollback support
+- Multi-channel structured JSON logging system
+- Docker Compose development environment (Flask + PostgreSQL + Redis + Nginx)
+- `/health` endpoint for DB connectivity verification
 
 ### Week 1 Deliverables
 
@@ -167,7 +162,7 @@ Network-Traffic-Monitoring-and-Attack-Detection/
 | Flask App Factory | [app/\_\_init\_\_.py](ids_project/app/__init__.py) |
 | Database Models | [app/models/](ids_project/app/models/) |
 | Docker Environment | [docker/docker-compose.yml](ids_project/docker/docker-compose.yml) |
-| Logging Framework | [app/core/logging.py](ids_project/app/core/) |
+| Logging Framework | [app/core/](ids_project/app/core/) |
 
 ---
 
@@ -218,7 +213,3 @@ open http://localhost:8080
 ## 📜 License
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
-
----
-
-*Built as a 16-week senior-level cybersecurity development project.*
