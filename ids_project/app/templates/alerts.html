@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Alert Center — NetIDS{% endblock %}
+{% block page_title %}Alert Center{% endblock %}
+
+{% block content %}
+<div class="alerts-page">
+
+  <!-- Filter toolbar -->
+  <div class="filter-bar glass-card">
+    <div class="filter-group">
+      <label class="filter-label" for="filter-severity">Severity</label>
+      <select class="filter-select" id="filter-severity">
+        <option value="">All</option>
+        <option value="critical">Critical</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label" for="filter-status">Status</label>
+      <select class="filter-select" id="filter-status">
+        <option value="">All</option>
+        <option value="new">New</option>
+        <option value="acknowledged">Acknowledged</option>
+        <option value="investigating">Investigating</option>
+        <option value="resolved">Resolved</option>
+        <option value="false_positive">False Positive</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label class="filter-label" for="filter-hours">Window</label>
+      <select class="filter-select" id="filter-hours">
+        <option value="1">1 hour</option>
+        <option value="6">6 hours</option>
+        <option value="24" selected>24 hours</option>
+        <option value="72">3 days</option>
+        <option value="168">7 days</option>
+      </select>
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-secondary" id="filter-apply-btn">Apply Filters</button>
+      <button class="btn btn-ghost" id="bulk-ack-btn">Bulk Acknowledge</button>
+    </div>
+  </div>
+
+  <!-- Alerts table -->
+  <div class="table-card glass-card">
+    <div class="table-header">
+      <div class="table-stats" id="alert-count-label">Loading…</div>
+    </div>
+    <div class="table-wrapper">
+      <table class="data-table" id="alerts-table" aria-label="Security alerts">
+        <thead>
+          <tr>
+            <th>Severity</th>
+            <th>Title</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Assigned</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="alerts-tbody">
+          <tr><td colspan="6" class="table-empty">Loading alerts…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <!-- Pagination -->
+    <div class="pagination" id="alerts-pagination"></div>
+  </div>
+
+  <!-- Alert detail modal -->
+  <div class="modal-backdrop hidden" id="alert-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal glass-card" id="alert-modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">Alert Details</h3>
+        <button class="modal-close" id="modal-close" aria-label="Close modal">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body">
+        <!-- Filled dynamically -->
+      </div>
+      <div class="modal-footer">
+        <select class="form-input" id="modal-status-select">
+          <option value="">Change status…</option>
+          <option value="acknowledged">Acknowledge</option>
+          <option value="investigating">Start Investigation</option>
+          <option value="resolved">Resolve</option>
+          <option value="false_positive">Mark False Positive</option>
+        </select>
+        <button class="btn btn-primary" id="modal-status-btn">Update</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  IDS.initAlertsPage();
+</script>
+{% endblock %}

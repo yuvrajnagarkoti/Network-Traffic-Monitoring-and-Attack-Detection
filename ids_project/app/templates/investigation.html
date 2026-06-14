@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block title %}Investigation — NetIDS{% endblock %}
+{% block page_title %}Investigation Tools{% endblock %}
+
+{% block content %}
+<div class="investigation-page">
+
+  <!-- Tool selector tabs -->
+  <div class="tab-bar glass-card" role="tablist">
+    <button class="tab-btn active" id="tab-timeline" role="tab" aria-selected="true" aria-controls="panel-timeline">Attack Timeline</button>
+    <button class="tab-btn" id="tab-ip-profile" role="tab" aria-selected="false" aria-controls="panel-ip-profile">IP Profile</button>
+    <button class="tab-btn" id="tab-flow" role="tab" aria-selected="false" aria-controls="panel-flow">TCP Flow</button>
+  </div>
+
+  <!-- Attack Timeline panel -->
+  <div class="tab-panel" id="panel-timeline" role="tabpanel" aria-labelledby="tab-timeline">
+    <div class="glass-card" style="padding: 1.5rem;">
+      <div class="form-row">
+        <div class="form-group" style="flex: 1;">
+          <label class="form-label" for="timeline-event-id">Attack Event ID</label>
+          <input class="form-input" type="text" id="timeline-event-id" placeholder="UUID of attack event" />
+        </div>
+        <div class="form-group" style="width: 140px;">
+          <label class="form-label" for="timeline-context">Context (min)</label>
+          <input class="form-input" type="number" id="timeline-context" value="5" min="1" max="60" />
+        </div>
+        <button class="btn btn-primary" id="timeline-load-btn" style="align-self: flex-end;">Load Timeline</button>
+      </div>
+      <div class="timeline-container" id="timeline-container">
+        <p class="table-empty">Enter an attack event ID above to reconstruct the timeline.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- IP Profile panel -->
+  <div class="tab-panel hidden" id="panel-ip-profile" role="tabpanel" aria-labelledby="tab-ip-profile">
+    <div class="glass-card" style="padding: 1.5rem;">
+      <div class="form-row">
+        <div class="form-group" style="flex: 1;">
+          <label class="form-label" for="ip-profile-input">IP Address</label>
+          <input class="form-input" type="text" id="ip-profile-input" placeholder="e.g. 203.0.113.42" />
+        </div>
+        <div class="form-group" style="width: 120px;">
+          <label class="form-label" for="ip-profile-days">Days</label>
+          <input class="form-input" type="number" id="ip-profile-days" value="30" min="1" max="365" />
+        </div>
+        <button class="btn btn-primary" id="ip-profile-btn" style="align-self: flex-end;">Profile IP</button>
+      </div>
+      <div class="ip-profile-result" id="ip-profile-result">
+        <p class="table-empty">Enter an IP address to generate a full profile.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TCP Flow panel -->
+  <div class="tab-panel hidden" id="panel-flow" role="tabpanel" aria-labelledby="tab-flow">
+    <div class="glass-card" style="padding: 1.5rem;">
+      <div class="search-grid" style="grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));">
+        <div class="form-group">
+          <label class="form-label" for="flow-src-ip">Source IP</label>
+          <input class="form-input" type="text" id="flow-src-ip" placeholder="Client IP" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="flow-dst-ip">Destination IP</label>
+          <input class="form-input" type="text" id="flow-dst-ip" placeholder="Server IP" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="flow-dst-port">Destination Port</label>
+          <input class="form-input" type="number" id="flow-dst-port" placeholder="e.g. 22" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="flow-start">Start Time</label>
+          <input class="form-input" type="datetime-local" id="flow-start" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="flow-end">End Time</label>
+          <input class="form-input" type="datetime-local" id="flow-end" />
+        </div>
+      </div>
+      <button class="btn btn-primary" id="flow-reconstruct-btn">Reconstruct Flow</button>
+      <div class="flow-result" id="flow-result" style="margin-top: 1.5rem;">
+        <p class="table-empty">Enter connection parameters to reconstruct the TCP flow.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  IDS.initInvestigationPage();
+</script>
+{% endblock %}

@@ -1,0 +1,91 @@
+# ============================================
+# Network IDS Project - .gitignore
+# ============================================
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+*.whl
+*.manifest
+*.spec
+
+# ---- Virtual Environments ----
+venv/
+.venv/
+ENV/
+env/
+
+# ---- Environment Variables ----
+.env
+.env.production
+.env.staging
+.env.local
+
+# ---- IDE / Editor ----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# ---- OS Files ----
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.lnk
+
+# ---- Logs ----
+logs/
+*.log
+
+# ---- Database ----
+*.db
+*.sqlite3
+
+# ---- Docker ----
+docker/ssl/certs/
+docker/ssl/private/
+
+# ---- ML Models (large binary files) ----
+app/ml/models/*.pkl
+app/ml/models/*.joblib
+
+# ---- Generated Reports ----
+reports/generated/
+*.pdf
+
+# ---- Archive Data ----
+archive/
+
+# ---- Test Coverage ----
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# ---- Pytest ----
+.pytest_cache/
+
+# ---- MyPy ----
+.mypy_cache/
+
+# ---- Byte-compiled / optimized ----
+*.pyc
+*.pyo
+*.pyd
+
+# ---- Distribution ----
+*.tar.gz
+*.zip

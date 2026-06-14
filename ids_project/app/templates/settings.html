@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Settings — NetIDS{% endblock %}
+{% block page_title %}System Settings{% endblock %}
+
+{% block content %}
+<div class="settings-page">
+
+  <!-- Firewall settings -->
+  <div class="settings-section glass-card">
+    <h2 class="section-title">Firewall / IP Blocking</h2>
+    <div class="settings-grid">
+      <div class="form-group">
+        <label class="form-label" for="block-ip-input">Block IP Address</label>
+        <div class="form-row">
+          <input class="form-input" type="text" id="block-ip-input" placeholder="Enter IP to block" style="flex: 1;" />
+          <input class="form-input" type="number" id="block-duration" placeholder="Hours (blank = permanent)" style="width: 180px;" />
+          <button class="btn btn-danger" id="block-ip-btn">Block</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="unblock-ip-input">Unblock IP Address</label>
+        <div class="form-row">
+          <input class="form-input" type="text" id="unblock-ip-input" placeholder="Enter IP to unblock" style="flex: 1;" />
+          <button class="btn btn-secondary" id="unblock-ip-btn">Unblock</button>
+        </div>
+      </div>
+    </div>
+    <h3 style="margin-top:1rem; color: var(--text-secondary); font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem;">Active Blocks</h3>
+    <div class="table-wrapper">
+      <table class="data-table" id="blocks-table" aria-label="Active IP blocks">
+        <thead><tr><th>IP</th><th>Type</th><th>Reason</th><th>Expires</th><th>Actions</th></tr></thead>
+        <tbody id="blocks-tbody"><tr><td colspan="5" class="table-empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Blacklist / Whitelist -->
+  <div class="settings-section glass-card">
+    <h2 class="section-title">Blacklist &amp; Whitelist</h2>
+    <div class="tab-bar" style="margin-bottom: 1rem;" role="tablist">
+      <button class="tab-btn active" id="tab-blacklist" role="tab" aria-selected="true" aria-controls="list-blacklist">Blacklist</button>
+      <button class="tab-btn" id="tab-whitelist" role="tab" aria-selected="false" aria-controls="list-whitelist">Whitelist</button>
+    </div>
+    <div id="list-blacklist">
+      <div class="form-row" style="margin-bottom: 0.75rem;">
+        <input class="form-input" type="text" id="add-blacklist-ip" placeholder="IP to blacklist" style="flex: 1;" />
+        <input class="form-input" type="text" id="add-blacklist-reason" placeholder="Reason (optional)" style="flex: 2;" />
+        <button class="btn btn-danger" id="add-blacklist-btn">Add</button>
+        <a class="btn btn-ghost" href="/api/v1/blocks/blacklist/export">Export CSV</a>
+      </div>
+      <div class="table-wrapper"><table class="data-table" id="blacklist-table" aria-label="Blacklist entries">
+        <thead><tr><th>IP</th><th>Reason</th><th>Source</th><th>Added</th><th></th></tr></thead>
+        <tbody id="blacklist-tbody"><tr><td colspan="5" class="table-empty">Loading…</td></tr></tbody>
+      </table></div>
+    </div>
+    <div id="list-whitelist" class="hidden">
+      <div class="form-row" style="margin-bottom: 0.75rem;">
+        <input class="form-input" type="text" id="add-whitelist-ip" placeholder="IP to whitelist" style="flex: 1;" />
+        <input class="form-input" type="text" id="add-whitelist-desc" placeholder="Description (optional)" style="flex: 2;" />
+        <button class="btn btn-success" id="add-whitelist-btn">Add</button>
+        <a class="btn btn-ghost" href="/api/v1/blocks/whitelist/export">Export CSV</a>
+      </div>
+      <div class="table-wrapper"><table class="data-table" id="whitelist-table" aria-label="Whitelist entries">
+        <thead><tr><th>IP</th><th>Description</th><th>Added</th><th></th></tr></thead>
+        <tbody id="whitelist-tbody"><tr><td colspan="4" class="table-empty">Loading…</td></tr></tbody>
+      </table></div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  IDS.initSettingsPage();
+</script>
+{% endblock %}

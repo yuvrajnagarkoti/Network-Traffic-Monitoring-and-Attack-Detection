@@ -1,0 +1,4 @@
+# Saved ML model files
+# This directory stores trained model and scaler pickle files.
+# Files are managed by ModelManager — do not edit manually.
+*.pkl
