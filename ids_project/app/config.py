@@ -84,18 +84,28 @@ class DevelopmentConfig(BaseConfig):
 
 
 class TestingConfig(BaseConfig):
-    """Testing environment configuration."""
+    """Testing environment configuration.
+
+    Uses SQLite in-memory by default so tests run without a PostgreSQL instance.
+    Set DATABASE_TEST_URL env var to override with a real DB for integration tests.
+    """
 
     TESTING: bool = True
     DEBUG: bool = True
     SQLALCHEMY_DATABASE_URI: str = os.environ.get(
         "DATABASE_TEST_URL",
-        "postgresql://ids_user:ids_secure_password_change_me@localhost:5432/ids_test_db",
+        "sqlite:///:memory:",
     )
+    # Simpler engine options for SQLite (no pool needed)
+    SQLALCHEMY_ENGINE_OPTIONS: dict = {"pool_pre_ping": False}
     SQLALCHEMY_ECHO: bool = False
     WTF_CSRF_ENABLED: bool = False
     SESSION_COOKIE_SECURE: bool = False
-    SERVER_NAME: str = "localhost.localdomain"
+    # Skip packet capture initialisation during tests
+    CAPTURE_SIMULATION: bool = True
+    SKIP_CAPTURE_ENGINE: bool = True
+    # Disable rate limiting in tests
+    RATELIMIT_ENABLED: bool = False
 
 
 class ProductionConfig(BaseConfig):

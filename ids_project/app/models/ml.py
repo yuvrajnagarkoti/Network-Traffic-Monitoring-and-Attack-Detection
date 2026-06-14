@@ -10,10 +10,10 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import String, Integer, Float, Boolean, DateTime, Text, Index
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.extensions import db
+from app.extensions import db, JSONB
 
 
 class MLFeature(db.Model):

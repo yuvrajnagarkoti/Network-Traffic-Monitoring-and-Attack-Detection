@@ -14,10 +14,10 @@ from sqlalchemy import (
     String, Integer, Float, Boolean, DateTime, Text,
     Enum as SAEnum, Index,
 )
-from sqlalchemy.dialects.postgresql import UUID, INET, JSONB, ARRAY
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.extensions import db
+from app.extensions import db, INET, JSONB, ARRAY
 
 
 class SeverityLevel(str, enum.Enum):

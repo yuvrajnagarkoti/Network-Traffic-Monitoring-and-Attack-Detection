@@ -10,10 +10,10 @@ from typing import Optional
 
 from flask_login import UserMixin
 from sqlalchemy import String, Boolean, Integer, DateTime, Text, Enum as SAEnum
-from sqlalchemy.dialects.postgresql import UUID, INET
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.extensions import db
+from app.extensions import db, INET
 
 import enum
 

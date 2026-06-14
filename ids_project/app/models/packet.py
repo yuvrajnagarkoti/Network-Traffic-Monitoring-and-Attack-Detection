@@ -9,10 +9,9 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy import BigInteger, Integer, String, DateTime, Index
-from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.extensions import db
+from app.extensions import db, INET
 
 
 class PacketLog(db.Model):
@@ -31,7 +30,7 @@ class PacketLog(db.Model):
         {"schema": None},
     )
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
     src_ip: Mapped[str] = mapped_column(INET, nullable=False)
     dst_ip: Mapped[str] = mapped_column(INET, nullable=False)
     src_port: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -81,7 +80,7 @@ class ProtocolStats(db.Model):
         Index("ix_protocol_stats_window", "protocol", "window_start"),
     )
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
     protocol: Mapped[str] = mapped_column(String(10), nullable=False)
     packet_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     byte_count: Mapped[int] = mapped_column(BigInteger, default=0, nullable=False)

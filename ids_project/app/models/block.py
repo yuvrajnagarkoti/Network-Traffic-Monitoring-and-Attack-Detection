@@ -14,10 +14,10 @@ from sqlalchemy import (
     String, Boolean, DateTime, Text,
     Enum as SAEnum,
 )
-from sqlalchemy.dialects.postgresql import UUID, INET
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.extensions import db
+from app.extensions import db, INET
 
 
 class BlockType(str, enum.Enum):

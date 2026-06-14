@@ -13,10 +13,10 @@ from typing import Optional
 from sqlalchemy import (
     BigInteger, Integer, Float, String, DateTime, Text, Index,
 )
-from sqlalchemy.dialects.postgresql import UUID, INET, JSONB
+from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.extensions import db
+from app.extensions import db, INET, JSONB
 
 
 class AuditLog(db.Model):
@@ -33,7 +33,7 @@ class AuditLog(db.Model):
         Index("ix_audit_logs_action_created", "action", "created_at"),
     )
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
     user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         db.ForeignKey("users.id", ondelete="SET NULL"),
@@ -85,7 +85,7 @@ class SystemStats(db.Model):
         Index("ix_system_stats_recorded_at", "recorded_at"),
     )
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(BigInteger().with_variant(Integer, "sqlite"), primary_key=True, autoincrement=True)
     packets_per_second: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     bytes_per_second: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
     active_connections: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

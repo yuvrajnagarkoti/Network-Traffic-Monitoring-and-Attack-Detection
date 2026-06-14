@@ -33,6 +33,7 @@ def create_app(config_name: Optional[str] = None) -> Flask:
     app.config.from_object(config_by_name.get(config_name, config_by_name["default"]))
 
     _register_extensions(app)
+    _register_security(app)
     _register_blueprints(app)
     _register_error_handlers(app)
     _configure_logging(app)
@@ -45,7 +46,10 @@ def _register_extensions(app: Flask) -> None:
     """Initialize all Flask extensions with the application."""
     db.init_app(app)
     migrate.init_app(app, db)
-    socketio.init_app(app, cors_allowed_origins="*", async_mode="eventlet")
+    
+    async_mode = "threading" if app.testing or app.config.get("TESTING") else "eventlet"
+    socketio.init_app(app, cors_allowed_origins="*", async_mode=async_mode)
+    
     login_manager.init_app(app)
     bcrypt.init_app(app)
     csrf.init_app(app)
@@ -58,6 +62,19 @@ def _register_extensions(app: Flask) -> None:
             return db.session.get(User, uuid.UUID(user_id))
         except (ValueError, TypeError):
             return None
+
+
+def _register_security(app: Flask) -> None:
+    """Register security middleware: headers, rate limiting."""
+    from app.middleware.security_headers import register_security_middleware
+    register_security_middleware(app)
+
+    # Rate limiter (gracefully skipped if Flask-Limiter not installed)
+    try:
+        from app.core.rate_limiter import init_rate_limiter
+        init_rate_limiter(app)
+    except ImportError:
+        app.logger.debug("Flask-Limiter not installed — rate limiting disabled")
 
 
 def _register_blueprints(app: Flask) -> None:
@@ -73,6 +90,7 @@ def _register_blueprints(app: Flask) -> None:
     from app.api.v1.search import search_bp
     from app.api.v1.reports import reports_bp
     from app.api.v1.investigation import investigation_bp
+    from app.api.v1.docs import docs_bp
     from app.auth.routes import auth_bp, auth_api_bp
     from app.dashboard.routes import dashboard_bp
 
@@ -87,9 +105,20 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(search_bp)
     app.register_blueprint(reports_bp)
     app.register_blueprint(investigation_bp)
+    app.register_blueprint(docs_bp)
     app.register_blueprint(auth_bp)
     app.register_blueprint(auth_api_bp)
     app.register_blueprint(dashboard_bp)
+
+    # Exempt all /api/v1/* blueprints from CSRF — they use JWT Bearer tokens.
+    # CSRF protection is only meaningful for browser-session authenticated routes.
+    _api_blueprints = [
+        health_bp, packets_bp, attacks_bp, reputation_bp, ml_bp, threats_bp,
+        alerts_bp, blocks_bp, search_bp, reports_bp, investigation_bp, docs_bp,
+        auth_api_bp,
+    ]
+    for bp in _api_blueprints:
+        csrf.exempt(bp)
 
 
 def _register_error_handlers(app: Flask) -> None:
@@ -137,7 +166,15 @@ def _init_capture_engine(app: Flask) -> None:
 
     Wires all pipeline components together. Starts background queues
     and workers only in non-testing environments.
+
+    When SKIP_CAPTURE_ENGINE=True (testing), wires minimal stubs so API
+    endpoints respond without errors.
     """
+    if app.config.get("SKIP_CAPTURE_ENGINE", False):
+        # In testing mode: wire empty stubs so blueprints respond gracefully
+        _wire_test_stubs(app)
+        return
+
     from app.api.v1.packets import init_capture_engine
     from app.detection.orchestrator import DetectionOrchestrator
     from app.detection.config import DetectionConfig
@@ -291,3 +328,119 @@ def _init_capture_engine(app: Flask) -> None:
             alert_queue.start()
             email_queue_worker.start()
             app.logger.info('Background worker and queue threads started')
+
+
+def _wire_test_stubs(app: Flask) -> None:
+    """Wire null-safe stubs for all API service dependencies during testing.
+
+    Allows all API blueprints to respond (with empty datasets) without
+    requiring PostgreSQL, Redis, Scapy, or background threads.
+    """
+    from app.api.v1.attacks import init_detection_engine
+    from app.api.v1.reputation import init_reputation_service
+    from app.api.v1.ml import init_ml_api
+    from app.api.v1.threats import init_threats_api
+    from app.api.v1.alerts import init_alerts_api
+    from app.api.v1.blocks import init_blocks_api
+    from app.api.v1.search import init_search_api
+    from app.api.v1.investigation import init_investigation_api
+
+    class _NullService:
+        """Stub that returns safe empty responses for any attribute access or call."""
+
+        def __getattr__(self, name):
+            def _noop(*args, **kwargs):
+                return {"success": False, "error": "testing stub", "status_code": 200}
+            return _noop
+
+        def get_alerts(self, **kwargs):
+            return {"alerts": [], "total": 0}
+
+        def get_alert(self, alert_id):
+            return None
+
+        def update_status(self, *args, **kwargs):
+            return {"success": False, "error": "not found", "status_code": 404}
+
+        def bulk_acknowledge(self, **kwargs):
+            return {"acknowledged": 0, "status_code": 200}
+
+        def get_statistics(self, **kwargs):
+            return {"mtta": 0, "mttr": 0, "total": 0}
+
+        def get_active_campaigns(self):
+            return []
+
+        def list_blacklist(self, **kwargs):
+            return []
+
+        def list_whitelist(self, **kwargs):
+            return []
+
+        def export_csv(self, list_type):
+            return ""
+
+        def import_csv(self, *args, **kwargs):
+            return {"imported": 0}
+
+        def add_to_blacklist(self, **kwargs):
+            return {"success": True}
+
+        def remove_from_blacklist(self, ip):
+            return {"success": True}
+
+        def add_to_whitelist(self, **kwargs):
+            return {"success": True}
+
+        def remove_from_whitelist(self, ip):
+            return {"success": True}
+
+        def block(self, **kwargs):
+            return {"success": True}
+
+        def unblock(self, **kwargs):
+            return {"success": True}
+
+        def search(self, **kwargs):
+            return {"packets": [], "next_cursor": None, "total": 0}
+
+        def build(self, *args, **kwargs):
+            return {"error": "not found"}
+
+        def profile(self, *args, **kwargs):
+            return {"ip_address": "0.0.0.0", "attack_count": 0}
+
+        def reconstruct(self, **kwargs):
+            return {"packets": [], "start_time": None, "end_time": None}
+
+        @property
+        def stats(self):
+            return {}
+
+        def emit_alert_updated(self, *args, **kwargs):
+            pass
+
+    stub = _NullService()
+
+    with app.app_context():
+        init_detection_engine(app, stub)
+        init_reputation_service(app, stub)
+        init_ml_api(app, stub, stub, stub, stub, stub)
+        init_threats_api(app, stub, stub)
+        init_alerts_api(app, stub, stub, stub)
+        init_blocks_api(app, stub, stub)
+        init_search_api(app, stub)
+        init_investigation_api(app, stub, stub, stub)
+
+        app.extensions['orchestrator'] = stub
+        app.extensions['ml'] = {'feature_store': stub, 'trainer': stub, 'anomaly_detector': stub, 'model_manager': stub, 'drift_detector': stub}
+        app.extensions['reputation'] = stub
+        app.extensions['scorer'] = stub
+        app.extensions['response_engine'] = stub
+        app.extensions['alerts'] = {'manager': stub, 'aggregator': stub, 'streamer': stub}
+        app.extensions['protection'] = {'blocker': stub, 'list_manager': stub}
+        app.extensions['search'] = {'engine': stub}
+        app.extensions['investigation'] = {'timeline': stub, 'ip_investigator': stub}
+
+    app.logger.info("Test stubs wired — capture engine skipped")
+

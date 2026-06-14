@@ -1,0 +1,159 @@
+# ============================================================
+# NetIDS — Production Docker Compose
+# ============================================================
+# Orchestrates:
+#   app      — Flask/Gunicorn (eventlet)
+#   db       — PostgreSQL 15
+#   redis    — Redis 7 (cache + rate limiting)
+#   nginx    — Reverse proxy / SSL termination
+#   celery   — Optional async task worker
+#
+# Usage:
+#   docker compose -f docker/docker-compose.prod.yml up -d
+#
+# Environment variables required (.env.prod):
+#   SECRET_KEY, DATABASE_URL, REDIS_URL, ABUSEIPDB_API_KEY,
+#   POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB
+# ============================================================
+
+version: "3.9"
+
+services:
+  # ----------------------------------------------------------
+  # PostgreSQL database
+  # ----------------------------------------------------------
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER:     ${POSTGRES_USER:-ids_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB:       ${POSTGRES_DB:-ids_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-ids_user} -d ${POSTGRES_DB:-ids_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ids_net
+
+  # ----------------------------------------------------------
+  # Redis (cache + rate limiting storage)
+  # ----------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - ids_net
+
+  # ----------------------------------------------------------
+  # Flask application (Gunicorn + eventlet)
+  # ----------------------------------------------------------
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: production
+    restart: unless-stopped
+    environment:
+      FLASK_ENV:           production
+      SECRET_KEY:          ${SECRET_KEY}
+      DATABASE_URL:        postgresql://${POSTGRES_USER:-ids_user}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-ids_db}
+      REDIS_URL:           redis://redis:6379/0
+      RATELIMIT_STORAGE_URI: redis://redis:6379/1
+      ABUSEIPDB_API_KEY:   ${ABUSEIPDB_API_KEY:-}
+      CAPTURE_SIMULATION:  "true"
+      LOG_LEVEL:           INFO
+    volumes:
+      - app_logs:/app/logs
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    command: >
+      sh -c "
+        flask db upgrade &&
+        gunicorn --worker-class eventlet
+                 --workers 1
+                 --bind 0.0.0.0:5000
+                 --timeout 120
+                 --keep-alive 5
+                 --access-logfile -
+                 --error-logfile -
+                 'run:app'
+      "
+    networks:
+      - ids_net
+
+  # ----------------------------------------------------------
+  # Nginx reverse proxy (SSL termination)
+  # ----------------------------------------------------------
+  nginx:
+    image: nginx:1.25-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/proxy_params:/etc/nginx/proxy_params:ro
+      - ../ids_project/app/static:/app/app/static:ro
+      - nginx_ssl:/etc/nginx/ssl
+      - certbot_www:/var/www/certbot
+    depends_on:
+      - app
+    networks:
+      - ids_net
+
+  # ----------------------------------------------------------
+  # Certbot (Let's Encrypt — optional, run manually)
+  # ----------------------------------------------------------
+  certbot:
+    image: certbot/certbot:latest
+    profiles: ["certbot"]
+    volumes:
+      - nginx_ssl:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: >
+      sh -c "certbot certonly --webroot -w /var/www/certbot
+             --email ${ACME_EMAIL:-admin@example.com}
+             --agree-tos --no-eff-email
+             -d ${DOMAIN:-localhost}
+             && cp /etc/letsencrypt/live/${DOMAIN:-localhost}/fullchain.pem /etc/nginx/ssl/cert.pem
+             && cp /etc/letsencrypt/live/${DOMAIN:-localhost}/privkey.pem /etc/nginx/ssl/key.pem"
+    networks:
+      - ids_net
+
+# ----------------------------------------------------------
+# Networks
+# ----------------------------------------------------------
+networks:
+  ids_net:
+    driver: bridge
+
+# ----------------------------------------------------------
+# Volumes
+# ----------------------------------------------------------
+volumes:
+  postgres_data:
+  redis_data:
+  app_logs:
+  nginx_ssl:
+  certbot_www:

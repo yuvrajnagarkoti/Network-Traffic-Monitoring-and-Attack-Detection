@@ -68,8 +68,8 @@ This system provides enterprise-grade network intrusion detection with:
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/network-ids.git
-cd network-ids/ids_project
+git clone https://github.com/yuvrajnagarkoti/Network-Traffic-Monitoring-and-Attack-Detection.git
+cd Network-Traffic-Monitoring-and-Attack-Detection/ids_project
 
 # Copy environment template
 cp .env.example .env
@@ -124,8 +124,8 @@ ids_project/
 
 | Phase | Description | Status |
 |-------|------------|--------|
-| 1 | Project Planning & System Architecture | 🔄 In Progress |
-| 2 | Development Environment & Database Design | ⬜ Planned |
+| 1 | Project Planning & System Architecture | ✅ Completed |
+| 2 | Development Environment & Database Design | ✅ Completed |
 | 3 | Packet Monitoring Engine | ⬜ Planned |
 | 4 | Core Attack Detection Engine | ⬜ Planned |
 | 5 | Machine Learning & Threat Intelligence | ⬜ Planned |

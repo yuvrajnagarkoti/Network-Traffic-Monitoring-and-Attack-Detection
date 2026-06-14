@@ -32,7 +32,15 @@ def test_scoring_modifiers(app, db_session):
     db_session.commit()
 
     scorer = ThreatScorer(app=app)
-    score_breakdown = scorer.score_attack(event)
+    # Convert SQLAlchemy event to dict for scorer
+    event_dict = {
+        "attack_type": event.attack_type.value,
+        "source_ip": event.source_ip,
+        "target_ip": event.target_ip,
+        "evidence": event.evidence,
+        "duration_seconds": event.duration_seconds
+    }
+    score_breakdown = scorer.calculate(event_dict)
 
     assert "final_score" in score_breakdown
     assert 0 <= score_breakdown["final_score"] <= 100
@@ -54,7 +62,14 @@ def test_response_engine_critical(app, db_session):
         "scored_at": datetime.now(timezone.utc).isoformat()
     }
 
-    result = response_engine.process_scored_alert(breakdown)
+    # Temporarily remove blocker stub to trigger fallback path which writes to DB
+    old_protection = app.extensions.get("protection")
+    app.extensions["protection"] = {}
+
+    try:
+        result = response_engine.process_scored_alert(breakdown)
+    finally:
+        app.extensions["protection"] = old_protection
 
     assert result["action"] == "critical_response"
     assert "alert_created" in result["actions"]
@@ -62,7 +77,8 @@ def test_response_engine_critical(app, db_session):
     assert "email_queued" in result["actions"]
 
     # Verify database state
-    alert = Alert.query.filter_by(id=result["alert_id"]).first()
+    alert_uuid = uuid.UUID(result["alert_id"])
+    alert = Alert.query.filter_by(id=alert_uuid).first()
     assert alert is not None
     assert alert.severity == AlertSeverity.CRITICAL
 
@@ -70,7 +86,7 @@ def test_response_engine_critical(app, db_session):
     assert block is not None
     assert block.block_type == BlockType.AUTO
 
-    email = EmailNotification.query.filter_by(alert_id=result["alert_id"]).first()
+    email = EmailNotification.query.filter_by(alert_id=alert_uuid).first()
     assert email is not None
     assert email.recipient_email == app.config.get("MAIL_DEFAULT_SENDER", "admin@localhost")
 
