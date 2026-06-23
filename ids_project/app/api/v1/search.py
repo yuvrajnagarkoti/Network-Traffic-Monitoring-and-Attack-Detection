@@ -2,6 +2,7 @@
 Packet search REST API.
 
 GET /api/v1/search/packets    — cursor-paginated packet search
+GET /api/v1/packets/search    — alias (matches app.js URL)
 """
 
 import logging
@@ -11,7 +12,7 @@ from flask import Blueprint, jsonify, request
 
 logger = logging.getLogger(__name__)
 
-search_bp = Blueprint("search", __name__, url_prefix="/api/v1/search")
+search_bp = Blueprint("search", __name__)
 
 _search_engine = None
 
@@ -21,9 +22,8 @@ def init_search_api(app, search_engine) -> None:
     _search_engine = search_engine
 
 
-@search_bp.route("/packets", methods=["GET"])
-def search_packets():
-    """GET /api/v1/search/packets — filtered, cursor-paginated packet log search."""
+def _do_search():
+    """Shared search logic for both route aliases."""
     args = request.args
 
     # Parse time range
@@ -44,6 +44,10 @@ def search_packets():
     cursor = args.get("cursor")
     cursor_int = int(cursor) if cursor else None
 
+    if _search_engine is None:
+        # Graceful degradation: return empty results if search engine not wired
+        return jsonify({"packets": [], "next_cursor": None, "total": 0}), 200
+
     result = _search_engine.search(
         src_ip=args.get("src_ip"),
         dst_ip=args.get("dst_ip"),
@@ -59,3 +63,16 @@ def search_packets():
         order=args.get("order", "desc"),
     )
     return jsonify(result), 200
+
+
+@search_bp.route("/api/v1/search/packets", methods=["GET"])
+def search_packets():
+    """GET /api/v1/search/packets — filtered, cursor-paginated packet log search."""
+    return _do_search()
+
+
+@search_bp.route("/api/v1/packets/search", methods=["GET"])
+def search_packets_alias():
+    """GET /api/v1/packets/search — same as /api/v1/search/packets (JS alias)."""
+    return _do_search()
+

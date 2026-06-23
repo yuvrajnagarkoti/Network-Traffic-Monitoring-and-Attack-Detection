@@ -79,6 +79,33 @@ def get_alert(alert_id: str):
     return jsonify(alert), 200
 
 
+@alerts_bp.route("/<alert_id>", methods=["PATCH"])
+def patch_alert(alert_id: str):
+    """PATCH /api/v1/alerts/<alert_id> — update status from body (JS alias).
+
+    Accepts { status, user_id } in the request body and delegates to
+    the standard update_status() handler so existing tests remain valid.
+    """
+    data = request.get_json(silent=True) or {}
+    new_status = data.get("status")
+    if not new_status:
+        return jsonify({"error": "status field is required"}), 400
+
+    user_id = data.get("user_id")
+    result = _mgr().update_status(alert_id, new_status, user_id=user_id)
+
+    status_code = result.pop("status_code", 200)
+    if "error" in result:
+        return jsonify(result), status_code
+
+    if _streamer:
+        updated = _mgr().get_alert(alert_id)
+        if updated:
+            _streamer.emit_alert_updated(updated)
+
+    return jsonify(result), status_code
+
+
 @alerts_bp.route("/<alert_id>/status", methods=["PATCH"])
 def update_status(alert_id: str):
     """PATCH /api/v1/alerts/<alert_id>/status — lifecycle transition."""

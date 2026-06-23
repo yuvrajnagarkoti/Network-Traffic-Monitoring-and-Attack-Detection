@@ -172,3 +172,99 @@ def export_whitelist():
     csv_data = _list_manager.export_csv("whitelist")
     return Response(csv_data, mimetype="text/csv",
                     headers={"Content-Disposition": "attachment; filename=whitelist.csv"})
+
+
+# ---------------------------------------------------------------------------
+# JS-friendly alias routes (match URL patterns used by app.js)
+# These complement the REST endpoints above without breaking the original API.
+# ---------------------------------------------------------------------------
+
+@blocks_bp.route("/active", methods=["GET"])
+def list_active_blocks():
+    """GET /api/v1/blocks/active — active blocks (JS alias)."""
+    from app.models.block import IpBlock
+    blocks = IpBlock.query.filter_by(is_active=True).order_by(IpBlock.blocked_at.desc()).limit(200).all()
+    return jsonify({"blocks": [b.to_dict() for b in blocks], "count": len(blocks)}), 200
+
+
+@blocks_bp.route("/block", methods=["POST"])
+def block_ip_alias():
+    """POST /api/v1/blocks/block — block an IP (JS alias)."""
+    data = request.get_json(silent=True) or {}
+    ip = (data.get("ip_address") or data.get("ip") or "").strip()
+    if not ip:
+        return jsonify({"error": "ip_address is required"}), 400
+    result = _blocker.block(
+        ip=ip,
+        reason=data.get("reason", "Manual block via dashboard"),
+        duration_hours=data.get("duration_hours"),
+        user_id=data.get("user_id"),
+        block_type="manual",
+    )
+    status_code = 200 if result.get("success") else 400
+    return jsonify(result), status_code
+
+
+@blocks_bp.route("/unblock", methods=["POST"])
+def unblock_ip_alias():
+    """POST /api/v1/blocks/unblock — unblock an IP (JS alias)."""
+    data = request.get_json(silent=True) or {}
+    ip = (data.get("ip_address") or data.get("ip") or "").strip()
+    if not ip:
+        return jsonify({"error": "ip_address is required"}), 400
+    result = _blocker.unblock(ip=ip, user_id=data.get("user_id"))
+    status_code = 200 if result.get("success") else 404
+    return jsonify(result), status_code
+
+
+@blocks_bp.route("/blacklist/add", methods=["POST"])
+def add_blacklist_alias():
+    """POST /api/v1/blocks/blacklist/add — add to blacklist (JS alias)."""
+    data = request.get_json(silent=True) or {}
+    ip = (data.get("ip_address") or data.get("ip") or "").strip()
+    if not ip:
+        return jsonify({"error": "ip_address is required"}), 400
+    result = _list_manager.add_to_blacklist(
+        ip=ip, reason=data.get("reason"), source="manual", user_id=data.get("user_id")
+    )
+    status_code = 201 if result.get("success") else 400
+    return jsonify(result), status_code
+
+
+@blocks_bp.route("/blacklist/remove", methods=["POST"])
+def remove_blacklist_alias():
+    """POST /api/v1/blocks/blacklist/remove — remove from blacklist (JS alias)."""
+    data = request.get_json(silent=True) or {}
+    ip = (data.get("ip_address") or data.get("ip") or "").strip()
+    if not ip:
+        return jsonify({"error": "ip_address is required"}), 400
+    result = _list_manager.remove_from_blacklist(ip)
+    status_code = 200 if result.get("success") else 404
+    return jsonify(result), status_code
+
+
+@blocks_bp.route("/whitelist/add", methods=["POST"])
+def add_whitelist_alias():
+    """POST /api/v1/blocks/whitelist/add — add to whitelist (JS alias)."""
+    data = request.get_json(silent=True) or {}
+    ip = (data.get("ip_address") or data.get("ip") or "").strip()
+    if not ip:
+        return jsonify({"error": "ip_address is required"}), 400
+    result = _list_manager.add_to_whitelist(
+        ip=ip, description=data.get("description"), user_id=data.get("user_id")
+    )
+    status_code = 201 if result.get("success") else 400
+    return jsonify(result), status_code
+
+
+@blocks_bp.route("/whitelist/remove", methods=["POST"])
+def remove_whitelist_alias():
+    """POST /api/v1/blocks/whitelist/remove — remove from whitelist (JS alias)."""
+    data = request.get_json(silent=True) or {}
+    ip = (data.get("ip_address") or data.get("ip") or "").strip()
+    if not ip:
+        return jsonify({"error": "ip_address is required"}), 400
+    result = _list_manager.remove_from_whitelist(ip)
+    status_code = 200 if result.get("success") else 404
+    return jsonify(result), status_code
+

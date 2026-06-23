@@ -247,19 +247,25 @@ def get_live_packets():
 
 @packets_bp.route("/api/v1/packets/protocols", methods=["GET"])
 def get_protocol_distribution():
-    """Return protocol distribution for the latest aggregation window.
+    """Return protocol distribution as a flat dict for the dashboard doughnut chart.
+
+    Returns:
+        { protocols: { "TCP": N, "UDP": N, ... }, timestamp: "..." }
 
     Query params:
         - limit: Max protocols to return (default: 20)
     """
     if _stats_aggregator is None:
-        return jsonify({"error": "Capture engine not initialized"}), 503
+        return jsonify({"protocols": {}, "timestamp": datetime.now(timezone.utc).isoformat()}), 200
 
     limit = request.args.get("limit", 20, type=int)
-    protocols = _stats_aggregator.get_protocol_distribution()[:limit]
+    raw_list = _stats_aggregator.get_protocol_distribution()[:limit]
+
+    # Convert list-of-dicts to plain dict keyed by protocol name
+    protocols_dict = {item["protocol"]: item["packet_count"] for item in raw_list}
 
     return jsonify({
-        "protocols": protocols,
+        "protocols": protocols_dict,
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }), 200
 
@@ -285,18 +291,46 @@ def get_top_talkers():
 
 @packets_bp.route("/api/v1/packets/stats", methods=["GET"])
 def get_packet_stats():
-    """Return current packets/second, bytes/second, and queue depth.
+    """Return flat dashboard-friendly metrics.
 
-    Combines metrics from the capture engine, parser, flow tracker,
-    batch writer, and stats aggregator.
+    Returns a single-level dict with the keys the frontend JS
+    expects: packets_per_second, bytes_per_second, active_alerts,
+    critical_count, blocked_ips, is_capturing, and timestamp.
     """
+    # Base capture / aggregator stats
+    agg_stats = _stats_aggregator.get_current_stats() if _stats_aggregator else {}
+    cap_stats  = _capture.stats if _capture else {}
+
+    pps = agg_stats.get("packets_per_second", 0)
+    bps = agg_stats.get("bytes_per_second",   0)
+
+    # Pull live alert / block counts from DB
+    active_alerts  = 0
+    critical_count = 0
+    blocked_ips    = 0
+    try:
+        from app.extensions import db
+        from app.models.alert import Alert
+        from app.models.block import IpBlock
+        active_alerts  = db.session.query(Alert).filter(
+            Alert.status.in_(["new", "acknowledged", "investigating"])
+        ).count()
+        critical_count = db.session.query(Alert).filter(
+            Alert.severity == "critical",
+            Alert.status.in_(["new", "acknowledged", "investigating"]),
+        ).count()
+        blocked_ips = db.session.query(IpBlock).filter_by(is_active=True).count()
+    except Exception:
+        pass
+
     result = {
-        "capture": _capture.stats if _capture else {},
-        "parser": _parser.stats if _parser else {},
-        "flow_tracker": _flow_tracker.stats if _flow_tracker else {},
-        "batch_writer": _batch_writer.stats if _batch_writer else {},
-        "aggregator": _stats_aggregator.stats if _stats_aggregator else {},
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "packets_per_second": pps,
+        "bytes_per_second":   bps,
+        "active_alerts":      active_alerts,
+        "critical_count":     critical_count,
+        "blocked_ips":        blocked_ips,
+        "is_capturing":       cap_stats.get("is_running", False),
+        "timestamp":          datetime.now(timezone.utc).isoformat(),
     }
     return jsonify(result), 200
 

@@ -230,9 +230,17 @@ class ResponseEngine:
                     f"from {breakdown.get('source_ip', 'unknown')}"
                 )
 
+                ae_id = breakdown.get("attack_event_id")
+                if isinstance(ae_id, str):
+                    ae_id = uuid.UUID(ae_id)
+
+                ts_id = breakdown.get("threat_score_id")
+                if isinstance(ts_id, str) and ts_id:
+                    ts_id = uuid.UUID(ts_id)
+
                 alert = Alert(
-                    attack_event_id=breakdown.get("attack_event_id"),
-                    threat_score_id=breakdown.get("threat_score_id"),
+                    attack_event_id=ae_id,
+                    threat_score_id=ts_id,
                     title=title,
                     message=breakdown.get("explanation", ""),
                     severity=severity_map.get(
@@ -291,12 +299,16 @@ class ResponseEngine:
                     logger.info("IP %s already blocked, skipping", source_ip)
                     return False
 
+                ae_id = breakdown.get("attack_event_id")
+                if isinstance(ae_id, str):
+                    ae_id = uuid.UUID(ae_id)
+
                 # Create block record (24-hour default for auto-blocks)
                 block = IpBlock(
                     ip_address=source_ip,
                     block_type=BlockType.AUTO,
                     reason=reason,
-                    attack_event_id=breakdown.get("attack_event_id"),
+                    attack_event_id=ae_id,
                     expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
                     is_active=True,
                 )
@@ -350,8 +362,12 @@ class ResponseEngine:
                     f"Time: {breakdown.get('scored_at', 'N/A')}\n"
                 )
 
+                a_id = alert_id
+                if isinstance(a_id, str) and a_id:
+                    a_id = uuid.UUID(a_id)
+
                 notification = EmailNotification(
-                    alert_id=alert_id,
+                    alert_id=a_id,
                     recipient_email=recipient,
                     subject=subject,
                     body_template=body,

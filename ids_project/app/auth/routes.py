@@ -101,7 +101,10 @@ def api_login():
             "pre_auth_token": pre_auth,
         }), 200
     else:
-        # No 2FA — issue JWT directly
+        # No 2FA — establish Flask-Login session AND issue JWT
+        login_user(user, remember=True)
+        user.last_login = datetime.now(timezone.utc)
+        db.session.commit()
         from app.auth.token_manager import issue_tokens
         tokens = issue_tokens(user)
         return jsonify({"requires_2fa": False, **tokens}), 200
@@ -143,7 +146,8 @@ def verify_2fa():
     session.pop("pre_auth_token", None)
     session.pop("pre_auth_user_id", None)
 
-    # Update last login
+    # Establish Flask-Login session AND update last login
+    login_user(user, remember=True)
     user.last_login = datetime.now(timezone.utc)
     db.session.commit()
 
